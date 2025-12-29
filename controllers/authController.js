@@ -50,32 +50,25 @@ exports.login = async (req, res) => {
 };
 
 exports.changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'All fields required' });
-    }
-
-    const user = await User.findById(req.user);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: 'Current password incorrect' });
-    }
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-    user.password = hashed;
-    await user.save();
-
-    return res.json({ message: 'Password changed successfully' });
-  } catch (err) {
-    console.error('CHANGE PASSWORD ERROR:', err);
-    return res.status(500).json({ message: 'Server error' });
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'All fields required' });
   }
+
+  const user = await User.findById(req.user);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: 'Current password incorrect' });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  user.password = hashed;
+  await user.save();
+
+  res.json({ message: 'Password changed successfully' });
 };

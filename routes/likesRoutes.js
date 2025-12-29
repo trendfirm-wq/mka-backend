@@ -1,49 +1,52 @@
 const express = require('express');
 const router = express.Router();
 
-// TEMP in-memory store (works immediately)
-// Later we can replace with MongoDB
-let likes = [];
+/* ===============================
+   UI LIKES (INDEX / NEWS / STORE)
+   - In-memory (temporary)
+   - No auth
+================================ */
+
+let uiLikes = [];
 // shape: { userId, itemKey }
 
 /**
- * TOGGLE LIKE / UNLIKE
+ * TOGGLE UI LIKE
+ * POST /api/likes/ui/toggle
  */
-router.post('/toggle', (req, res) => {
+router.post('/ui/toggle', (req, res) => {
   const { userId, itemKey } = req.body;
 
   if (!userId || !itemKey) {
     return res.status(400).json({ message: 'Invalid data' });
   }
 
-  const index = likes.findIndex(
+  const index = uiLikes.findIndex(
     l => l.userId === userId && l.itemKey === itemKey
   );
 
   if (index > -1) {
-    likes.splice(index, 1); // UNLIKE
+    uiLikes.splice(index, 1);
   } else {
-    likes.push({ userId, itemKey }); // LIKE
+    uiLikes.push({ userId, itemKey });
   }
 
-  const count = likes.filter(l => l.itemKey === itemKey).length;
+  const count = uiLikes.filter(l => l.itemKey === itemKey).length;
   res.json({ count });
 });
 
 /**
- * GET ALL LIKE COUNTS
+ * GET UI LIKE COUNTS
+ * GET /api/likes/ui?userId=123
  */
-router.get('/', (req, res) => {
+router.get('/ui', (req, res) => {
   const userId = req.query.userId;
 
   const counts = {};
   const userLikes = {};
 
-  likes.forEach(like => {
-    // count likes
+  uiLikes.forEach(like => {
     counts[like.itemKey] = (counts[like.itemKey] || 0) + 1;
-
-    // track THIS user's likes
     if (like.userId === userId) {
       userLikes[like.itemKey] = true;
     }
@@ -51,5 +54,37 @@ router.get('/', (req, res) => {
 
   res.json({ counts, userLikes });
 });
+
+/* ===============================
+   SHORTS LIKES (DATABASE)
+   - MongoDB
+   - Auth protected
+   - Shared across accounts
+================================ */
+
+const protect = require('../middleware/authMiddleware');
+const {
+  toggleLike,
+  getLikeCount,
+  hasUserLiked,
+} = require('../controllers/shortsController');
+
+/**
+ * TOGGLE SHORT LIKE
+ * POST /api/likes/shorts/:id
+ */
+router.post('/shorts/:id', protect, toggleLike);
+
+/**
+ * GET SHORT LIKE COUNT
+ * GET /api/likes/shorts/:id/count
+ */
+router.get('/shorts/:id/count', getLikeCount);
+
+/**
+ * CHECK IF USER LIKED SHORT
+ * GET /api/likes/shorts/:id/status
+ */
+router.get('/shorts/:id/status', protect, hasUserLiked);
 
 module.exports = router;

@@ -21,6 +21,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/news', newsRoutes);
 app.use('/api/likes', require('./routes/likesRoutes'));
 app.use('/api/forum', forumRoutes);
+app.use('/api/shorts', require('./routes/shortsRoutes'));
 
 
 
