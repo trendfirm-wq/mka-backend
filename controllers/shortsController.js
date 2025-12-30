@@ -23,14 +23,13 @@ exports.toggleLike = async (req, res) => {
       });
     }
 
-    // 🔑 ALWAYS return authoritative count
     const count = await ShortLike.countDocuments({
       short: shortId,
     });
 
     res.json({
       liked: !existingLike,
-      count,
+      count, // 👈 THIS MUST EXIST
     });
   } catch (error) {
     console.error('Toggle like error:', error);
