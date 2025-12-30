@@ -16,25 +16,28 @@ exports.toggleLike = async (req, res) => {
 
     if (existingLike) {
       await ShortLike.deleteOne({ _id: existingLike._id });
-
-      return res.json({
-        liked: false,
+    } else {
+      await ShortLike.create({
+        short: shortId,
+        user: userId,
       });
     }
 
-    await ShortLike.create({
+    // 🔑 ALWAYS return authoritative count
+    const count = await ShortLike.countDocuments({
       short: shortId,
-      user: userId,
     });
 
     res.json({
-      liked: true,
+      liked: !existingLike,
+      count,
     });
   } catch (error) {
     console.error('Toggle like error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 /* ===============================
    GET LIKE COUNT
